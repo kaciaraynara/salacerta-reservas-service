@@ -145,9 +145,7 @@ def setup_infrastructure():
         db.close()
 
 
-# =========================================================================
-# ENDPOINTS DE INFRAESTRUTURA (ALIMENTAÇÃO DOS DROPDOWNS DINÂMICOS)
-# =========================================================================
+
 
 @app.get("/api/locais", response_model=List[schemas.LocalResponse])
 def listar_locais(db: Session = Depends(database.get_db), token_payload: dict = Depends(validar_token)):
@@ -164,9 +162,7 @@ def listar_salas(db: Session = Depends(database.get_db), token_payload: dict = D
     return db.query(models.Sala).all()
 
 
-# =========================================================================
-# ENDPOINTS DE DOMÍNIO (GESTÃO E REGRAS DE NEGÓCIO DE RESERVAS)
-# =========================================================================
+
 
 @app.get("/api/reservas", response_model=List[schemas.ReservaResponse])
 def listar_reservas(db: Session = Depends(database.get_db), token_payload: dict = Depends(validar_token)):
@@ -182,7 +178,7 @@ def criar_reserva(reserva: schemas.ReservaCreate, db: Session = Depends(database
     """
     if reserva.data_fim <= reserva.data_inicio:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cronograma incoerente: O término do evento deve ser posterior ao horário de início."
         )
 
@@ -196,7 +192,7 @@ def criar_reserva(reserva: schemas.ReservaCreate, db: Session = Depends(database
 
     if conflito:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
+            status_code=status.HTTP_409_CONFLICT,
             detail="Indisponibilidade de recurso: Conflito de horário detectado para esta sala."
         )
 
@@ -224,13 +220,13 @@ def atualizar_reserva(reserva_id: int, reserva_atualizada: schemas.ReservaCreate
 
     if reserva_atualizada.data_fim <= reserva_atualizada.data_inicio:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cronograma incoerente: O término do evento deve ser posterior ao horário de início."
         )
 
     conflito = db.query(models.Reserva).filter(
         models.Reserva.sala_id == reserva_atualizada.sala_id,
-        models.Reserva.id != reserva_id, 
+        models.Reserva.id != reserva_id,
         and_(
             models.Reserva.data_inicio < reserva_atualizada.data_fim,
             models.Reserva.data_fim > reserva_atualizada.data_inicio
@@ -239,7 +235,7 @@ def atualizar_reserva(reserva_id: int, reserva_atualizada: schemas.ReservaCreate
 
     if conflito:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
+            status_code=status.HTTP_409_CONFLICT,
             detail="Indisponibilidade de recurso: Conflito de horário detectado para esta alteração."
         )
 
@@ -253,7 +249,7 @@ def atualizar_reserva(reserva_id: int, reserva_atualizada: schemas.ReservaCreate
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Falha operacional na atualização dos dados: {str(e)}"
         )
 
@@ -273,6 +269,6 @@ def deletar_reserva(reserva_id: int, db: Session = Depends(database.get_db), tok
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Falha operacional na exclusão do registro: {str(e)}"
         )
